@@ -1,48 +1,85 @@
+import React, { useState, useRef, useEffect } from "react";
+import { InputText } from "primereact/inputtext";
+import { MenuItem } from "primereact/menuitem";
+import { Avatar } from "primereact/avatar";
+import { Menubar } from "primereact/menubar";
+import Logo from "./logo/logo";
+import "./header-nav.css";
 
-import { InputText } from 'primereact/inputtext';
-import { MenuItem } from 'primereact/menuitem';
-import { Badge } from 'primereact/badge';
-import { Avatar } from 'primereact/avatar'; 
-import { Menubar } from 'primereact/menubar';
-import Logo from './logo/logo';
-import './header-nav.css'
-
-interface CustomMenuItem extends MenuItem {
-    badge?: string;
-    shortcut?: string;
-}
 const HeaderNav: React.FC = () => {
-   
+  const [activeSearch, setActiveSearch] = useState<boolean>(false);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-    const itemRenderer = (item: CustomMenuItem) => (
-        <a className="flex align-items-center p-menuitem-link">
-            <span className={item.icon} />
-            <span className="mx-2">{item.label}</span>
-            {item.badge && <Badge className="ml-auto" value={item.badge} />}
-            {item.shortcut && <span className="ml-auto border-1 surface-border border-round surface-100 text-xs p-1">{item.shortcut}</span>}
-        </a>
-    );
-    const items: MenuItem[] = [
-        {
-            label: 'TV Shows',
-        },
-        {
-            label: 'Movies',
-        }
-    ];
+  const handleSearch = () => {
+    setActiveSearch(!activeSearch);
+  };
 
-    const start = <Logo />;
-    const end = (
-        <div className="">
-            <InputText placeholder="Search" type="text" className="w-8rem sm:w-auto" />
-            <Avatar image="https://primefaces.org/cdn/primereact/images/avatar/amyelsner.png" shape="circle" />
-        </div>
-    );
+  //Close search input if clicking outside of the search or container
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setActiveSearch(false);
+      }
+    };
 
-    return (
-        <div className="card">
-            <Menubar model={items} start={start} end={end} />
-        </div>
-    )
-}
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (activeSearch && searchRef.current) {
+      searchRef.current.focus();
+    }
+  }, [activeSearch]);
+
+  const items: MenuItem[] = [{ label: "TV Shows" }, { label: "Movies" }];
+
+  const start = <Logo />;
+  const end = (
+    <div className="header-end" ref={containerRef}>
+      {!activeSearch && (
+        <i
+          className="pi pi-search"
+          style={{
+            fontSize: "1.5rem",
+            cursor: "pointer",
+            color: "var(--bg-color)",
+          }}
+          onClick={handleSearch}
+        />
+      )}
+      {activeSearch && (
+        <InputText
+          placeholder="Search"
+          type="text"
+          className="header-search"
+          ref={searchRef}
+        />
+      )}
+      <Avatar
+        image="https://primefaces.org/cdn/primereact/images/avatar/amyelsner.png"
+        shape="circle"
+      />
+    </div>
+  );
+
+  return (
+    <div className="header-nav">
+      <Menubar
+        model={items}
+        start={start}
+        end={end}
+        className="header-nav-menu"
+      />
+    </div>
+  );
+};
+
 export default HeaderNav;
